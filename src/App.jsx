@@ -67,66 +67,95 @@ const FOR_WHOM = [
 
 /* ==================== ХУКИ ==================== */
 
-/* Scroll-reveal: наблюдает за элементами с классом .reveal */
-function useScrollReveal() {
+/* Единый scroll-менеджер (один обработчик вместо четырёх) */
+function useScrollManager() {
+  const [data, setData] = useState({
+    progress: 0,
+    scrolled: false,
+    showScrollTop: false,
+    activeSection: '',
+  })
+
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible')
+    let ticking = false
+    const handler = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const scrollTop = window.scrollY
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight
+
+        let activeSection = ''
+        const sections = NAV_LINKS.map(l => l.href.slice(1))
+        for (const id of sections) {
+          const el = document.getElementById(id)
+          if (el && el.getBoundingClientRect().top <= 120) {
+            activeSection = id
           }
-        })
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-    )
-
-    // Наблюдаем за всеми .reveal
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
-
-    return () => observer.disconnect()
-  }, [])
-}
-
-/* Прогресс-бар скролла */
-function useScrollProgress() {
-  const [progress, setProgress] = useState(0)
-
-  useEffect(() => {
-    const handler = () => {
-      const scrollTop = window.scrollY
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight
-      setProgress(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0)
-    }
-    window.addEventListener('scroll', handler, { passive: true })
-    return () => window.removeEventListener('scroll', handler)
-  }, [])
-
-  return progress
-}
-
-/* Активная секция навигации */
-function useActiveSection() {
-  const [active, setActive] = useState('')
-
-  useEffect(() => {
-    const handler = () => {
-      const sections = NAV_LINKS.map(l => l.href.slice(1))
-      let current = ''
-      for (const id of sections) {
-        const el = document.getElementById(id)
-        if (el && el.getBoundingClientRect().top <= 120) {
-          current = id
         }
-      }
-      setActive(current)
+
+        setData({
+          progress: docHeight > 0 ? (scrollTop / docHeight) * 100 : 0,
+          scrolled: scrollTop > 30,
+          showScrollTop: scrollTop > 500,
+          activeSection,
+        })
+        ticking = false
+      })
     }
     window.addEventListener('scroll', handler, { passive: true })
     handler()
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
-  return active
+  return data
+}
+
+/* Scroll-reveal с поддержкой динамического контента (табы и т.д.) */
+function useScrollReveal() {
+  const observerRef = useRef(null)
+
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
+            io.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    )
+    observerRef.current = io
+
+    const observeAll = () => {
+      document.querySelectorAll('.reveal:not(.visible)').forEach(el => io.observe(el))
+    }
+    observeAll()
+
+    // Следим за DOM для динамического контента (табы)
+    const mutationObs = new MutationObserver(observeAll)
+    mutationObs.observe(document.body, { childList: true, subtree: true })
+
+    return () => {
+      io.disconnect()
+      mutationObs.disconnect()
+    }
+  }, [])
+}
+
+/* Управление блокировкой скролла (считает вложенные блокировки) */
+const scrollLockCount = { current: 0 }
+function lockScroll() {
+  scrollLockCount.current++
+  document.body.style.overflow = 'hidden'
+}
+function unlockScroll() {
+  scrollLockCount.current = Math.max(0, scrollLockCount.current - 1)
+  if (scrollLockCount.current === 0) {
+    document.body.style.overflow = ''
+  }
 }
 
 /* ==================== КОМПОНЕНТЫ ==================== */
@@ -169,27 +198,19 @@ function SectionHeader({ tag, title, subtitle, light = false }) {
 }
 
 /* --- Прогресс-бар --- */
-function ScrollProgress() {
-  const progress = useScrollProgress()
+function ScrollProgress({ progress }) {
   return <div className="scroll-progress" style={{ width: `${progress}%` }} />
 }
 
 /* --- Header --- */
-function Header({ onCtaClick }) {
+function Header({ onCtaClick, scrolled, activeSection }) {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const activeSection = useActiveSection()
 
+  // Блокируем скролл при открытом мобильном меню (с учётом вложенных блокировок)
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 30)
-    window.addEventListener('scroll', handler, { passive: true })
-    return () => window.removeEventListener('scroll', handler)
-  }, [])
-
-  // Блокируем скролл при открытом мобильном меню
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    if (mobileOpen) lockScroll()
+    else unlockScroll()
+    return () => { if (mobileOpen) unlockScroll() }
   }, [mobileOpen])
 
   return (
@@ -230,7 +251,8 @@ function Header({ onCtaClick }) {
           {/* Бургер */}
           <button onClick={() => setMobileOpen(!mobileOpen)}
             className={`lg:hidden p-2 rounded-lg cursor-pointer transition-colors ${scrolled ? 'text-slate-700' : 'text-white'}`}
-            aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}>
+            aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}
+            aria-expanded={mobileOpen}>
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -340,13 +362,15 @@ function About() {
         <SectionHeader tag="О нас" title="Профессиональная площадка для отрасли" />
 
         {/* Табы */}
-        <div className="flex justify-center mb-8 sm:mb-12 reveal">
+        <div className="flex justify-center mb-8 sm:mb-12 reveal" role="tablist">
           <div className="inline-flex bg-slate-100 rounded-xl sm:rounded-2xl p-1">
             {[
               { key: 'about', label: 'Об объединении' },
               { key: 'goals', label: 'Наши цели' },
             ].map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
+                role="tab"
+                aria-selected={tab === t.key}
                 className={`px-4 sm:px-8 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 cursor-pointer
                   ${tab === t.key
                     ? 'bg-white text-primary-500 shadow-md'
@@ -732,21 +756,28 @@ function Footer({ onCtaClick }) {
 /* --- Модальная форма заявки --- */
 function ApplicationModal({ isOpen, onClose }) {
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const formRef = useRef(null)
 
   useEffect(() => {
     if (isOpen) {
       setSubmitted(false)
-      document.body.style.overflow = 'hidden'
+      setSubmitting(false)
+      lockScroll()
     } else {
-      document.body.style.overflow = ''
+      unlockScroll()
+      // Сбрасываем форму при закрытии
+      if (formRef.current) formRef.current.reset()
     }
-    return () => { document.body.style.overflow = '' }
+    return () => { if (isOpen) unlockScroll() }
   }, [isOpen])
 
   if (!isOpen) return null
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (submitting) return // Защита от двойного клика
+    setSubmitting(true)
     setSubmitted(true)
   }
 
@@ -755,7 +786,7 @@ function ApplicationModal({ isOpen, onClose }) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm overlay-enter" onClick={onClose} />
       <div className="relative bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] overflow-y-auto modal-scroll modal-enter"
         onClick={e => e.stopPropagation()}>
-        <button onClick={onClose}
+        <button onClick={onClose} aria-label="Закрыть"
           className="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-300 hover:text-slate-600 cursor-pointer transition-colors z-10">
           <X size={22} />
         </button>
@@ -779,7 +810,7 @@ function ApplicationModal({ isOpen, onClose }) {
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Заявка на вступление</h3>
                 <p className="text-slate-500">Заполните форму — мы свяжемся с вами для консультации</p>
               </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Компания *</label>
@@ -788,9 +819,9 @@ function ApplicationModal({ isOpen, onClose }) {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Тип предприятия *</label>
-                    <select required
+                    <select required defaultValue=""
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm text-slate-700">
-                      <option value="" disabled selected>Выберите...</option>
+                      <option value="" disabled>Выберите...</option>
                       {MEMBER_TYPES.map((m, i) => (
                         <option key={i} value={m.label}>{m.label}</option>
                       ))}
@@ -847,15 +878,7 @@ function ApplicationModal({ isOpen, onClose }) {
 }
 
 /* --- Кнопка «Наверх» --- */
-function ScrollToTop() {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const handler = () => setVisible(window.scrollY > 500)
-    window.addEventListener('scroll', handler, { passive: true })
-    return () => window.removeEventListener('scroll', handler)
-  }, [])
-
+function ScrollToTop({ visible }) {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -877,36 +900,16 @@ export default function App() {
   const openModal = useCallback(() => setModalOpen(true), [])
   const closeModal = useCallback(() => setModalOpen(false), [])
 
-  // Подключаем scroll-reveal
+  // Единый scroll-менеджер
+  const { progress, scrolled, showScrollTop, activeSection } = useScrollManager()
+
+  // Scroll-reveal (включает MutationObserver для динамического контента)
   useScrollReveal()
-
-  // Переподключаем observer при смене табов и прочих обновлениях DOM
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      document.querySelectorAll('.reveal:not(.visible)').forEach(el => {
-        const io = new IntersectionObserver(
-          (entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                entry.target.classList.add('visible')
-                io.unobserve(entry.target)
-              }
-            })
-          },
-          { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-        )
-        io.observe(el)
-      })
-    })
-
-    observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer.disconnect()
-  }, [])
 
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased">
-      <ScrollProgress />
-      <Header onCtaClick={openModal} />
+      <ScrollProgress progress={progress} />
+      <Header onCtaClick={openModal} scrolled={scrolled} activeSection={activeSection} />
       <Hero onCtaClick={openModal} />
       <About />
       <Activities />
@@ -917,7 +920,7 @@ export default function App() {
       <Contacts onCtaClick={openModal} />
       <Footer onCtaClick={openModal} />
       <ApplicationModal isOpen={modalOpen} onClose={closeModal} />
-      <ScrollToTop />
+      <ScrollToTop visible={showScrollTop} />
     </div>
   )
 }
