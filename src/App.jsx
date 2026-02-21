@@ -666,9 +666,52 @@ function useGoogleSheetNews() {
   return { news, loading }
 }
 
+/* --- Модалка новости --- */
+function NewsModal({ item, onClose }) {
+  useEffect(() => {
+    if (!item) return
+    lockScroll()
+    const handleEscape = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      unlockScroll()
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [item, onClose])
+
+  if (!item) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 overlay-enter" />
+      <div className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-scroll modal-enter"
+        onClick={e => e.stopPropagation()}>
+        <button onClick={onClose}
+          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors"
+          aria-label="Закрыть">
+          <X size={18} />
+        </button>
+        {item['Картинка'] && (
+          <div className="w-full max-h-[400px] overflow-hidden rounded-t-2xl">
+            <img src={item['Картинка']} alt={item['Заголовок']} className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="p-6 sm:p-8">
+          {item['Дата'] && (
+            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-2">{item['Дата']}</p>
+          )}
+          <h2 className="font-bold text-slate-900 text-xl sm:text-2xl mb-4">{item['Заголовок']}</h2>
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed whitespace-pre-line">{item['Текст']}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* --- Новости --- */
 function News() {
   const { news, loading } = useGoogleSheetNews()
+  const [selected, setSelected] = useState(null)
 
   const placeholders = [
     { title: 'Скоро здесь появятся новости отрасли', text: 'Следите за обновлениями — мы будем публиковать актуальные новости' },
@@ -696,9 +739,10 @@ function News() {
           <div className="relative">
             <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-news -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
               {(hasNews ? news.slice(0, 20) : placeholders.map(n => ({ 'Заголовок': n.title, 'Текст': n.text, 'Дата': hasNews ? '' : 'Скоро', 'Картинка': '' }))).map((n, i) => (
-                <div key={i} className="min-w-[280px] w-[280px] sm:min-w-[320px] sm:w-[320px] flex-shrink-0 snap-start
+                <div key={i} onClick={() => hasNews && setSelected(n)}
+                  className={`min-w-[280px] w-[280px] sm:min-w-[320px] sm:w-[320px] flex-shrink-0 snap-start
                   rounded-xl sm:rounded-2xl overflow-hidden border border-slate-100 bg-white
-                  hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                  hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group ${hasNews ? 'cursor-pointer' : ''}`}>
                   {n['Картинка'] ? (
                     <div className="h-40 sm:h-48 overflow-hidden">
                       <img src={n['Картинка']} alt={n['Заголовок']}
@@ -724,6 +768,7 @@ function News() {
           </div>
         )}
       </div>
+      <NewsModal item={selected} onClose={() => setSelected(null)} />
     </section>
   )
 }
