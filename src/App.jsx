@@ -13,7 +13,7 @@ import {
 
 // ID Google Таблицы с новостями (вставь сюда ID из ссылки на таблицу)
 // Пример ссылки: https://docs.google.com/spreadsheets/d/СЮДА_ЭТОТ_ID/edit
-const GOOGLE_SHEET_ID = '1twYu4CozCShAyR2_KGpwlC8M6mV15z73PdvDWD6LxOE'
+const GOOGLE_SHEET_ID = '1GTWhFoB2tyWj-KcIBwyDd2tu0zgYAx2-wcixTV4I7cY'
 
 /* ==================== ДАННЫЕ ==================== */
 
@@ -685,50 +685,35 @@ function News() {
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-3 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
           </div>
-        ) : hasNews ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {news.map((n, i) => (
-              <div key={i} className={`rounded-xl sm:rounded-2xl overflow-hidden border border-slate-100 bg-white
-                hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group reveal reveal-delay-${Math.min(i, 2)}`}>
-                {n['Картинка'] ? (
-                  <div className="h-32 sm:h-48 overflow-hidden">
-                    <img src={n['Картинка']} alt={n['Заголовок']}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                ) : (
-                  <div className="h-32 sm:h-48 bg-gradient-to-br from-primary-50 via-slate-50 to-accent-50 flex items-center justify-center">
-                    <Package size={36} className="text-slate-200 group-hover:text-primary-200 transition-colors duration-300 sm:[&]:w-12 sm:[&]:h-12" />
-                  </div>
-                )}
-                <div className="p-4 sm:p-6">
-                  {n['Дата'] && (
-                    <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5 sm:mb-2">{n['Дата']}</p>
-                  )}
-                  <h3 className="font-bold text-slate-900 mb-1.5 sm:mb-2 text-sm sm:text-base group-hover:text-primary-500 transition-colors duration-300">
-                    {n['Заголовок']}
-                  </h3>
-                  <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{n['Текст']}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {placeholders.map((n, i) => (
-              <div key={i} className={`rounded-xl sm:rounded-2xl overflow-hidden border border-slate-100 bg-white
-                hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group reveal reveal-delay-${Math.min(i, 2)}`}>
-                <div className="h-32 sm:h-48 bg-gradient-to-br from-primary-50 via-slate-50 to-accent-50 flex items-center justify-center">
-                  <Package size={36} className="text-slate-200 group-hover:text-primary-200 transition-colors duration-300 sm:[&]:w-12 sm:[&]:h-12" />
+          <div className="relative">
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-news -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+              {(hasNews ? news.slice(0, 20) : placeholders.map(n => ({ 'Заголовок': n.title, 'Текст': n.text, 'Дата': hasNews ? '' : 'Скоро', 'Картинка': '' }))).map((n, i) => (
+                <div key={i} className="min-w-[280px] w-[280px] sm:min-w-[320px] sm:w-[320px] flex-shrink-0 snap-start
+                  rounded-xl sm:rounded-2xl overflow-hidden border border-slate-100 bg-white
+                  hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                  {n['Картинка'] ? (
+                    <div className="h-40 sm:h-48 overflow-hidden">
+                      <img src={n['Картинка']} alt={n['Заголовок']}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                  ) : (
+                    <div className="h-40 sm:h-48 bg-gradient-to-br from-primary-50 via-slate-50 to-accent-50 flex items-center justify-center">
+                      <Package size={36} className="text-slate-200 group-hover:text-primary-200 transition-colors duration-300 sm:[&]:w-12 sm:[&]:h-12" />
+                    </div>
+                  )}
+                  <div className="p-4 sm:p-6">
+                    {n['Дата'] && (
+                      <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5 sm:mb-2">{n['Дата']}</p>
+                    )}
+                    <h3 className="font-bold text-slate-900 mb-1.5 sm:mb-2 text-sm sm:text-base group-hover:text-primary-500 transition-colors duration-300 line-clamp-2">
+                      {n['Заголовок']}
+                    </h3>
+                    <p className="text-slate-500 text-xs sm:text-sm leading-relaxed line-clamp-3">{n['Текст']}</p>
+                  </div>
                 </div>
-                <div className="p-4 sm:p-6">
-                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5 sm:mb-2">Скоро</p>
-                  <h3 className="font-bold text-slate-900 mb-1.5 sm:mb-2 text-sm sm:text-base group-hover:text-primary-500 transition-colors duration-300">
-                    {n.title}
-                  </h3>
-                  <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{n.text}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
