@@ -14,6 +14,7 @@ import {
 // ID Google Таблицы с новостями (вставь сюда ID из ссылки на таблицу)
 // Пример ссылки: https://docs.google.com/spreadsheets/d/СЮДА_ЭТОТ_ID/edit
 const GOOGLE_SHEET_ID = '1GTWhFoB2tyWj-KcIBwyDd2tu0zgYAx2-wcixTV4I7cY'
+const WEB3FORMS_KEY = '2f9a0467-bbc7-41df-b04f-ba46f8456494'
 
 /* ==================== ДАННЫЕ ==================== */
 
@@ -776,11 +777,33 @@ function News() {
 /* --- Контакты --- */
 function Contacts({ onCtaClick }) {
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setSent(true)
-    setTimeout(() => setSent(false), 4000)
+    if (sending) return
+    setSending(true)
+    const form = e.target
+    const data = {
+      access_key: WEB3FORMS_KEY,
+      subject: 'Сообщение с сайта ЦАОПУМ',
+      from_name: form.name.value,
+      email: form.email.value,
+      message: form.message.value,
+    }
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (res.ok) {
+        setSent(true)
+        form.reset()
+        setTimeout(() => setSent(false), 4000)
+      }
+    } catch {}
+    setSending(false)
   }
 
   return (
@@ -845,21 +868,21 @@ function Contacts({ onCtaClick }) {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <input type="text" required placeholder="Ваше имя"
+                  <input type="text" name="name" required placeholder="Ваше имя"
                     className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30
                       focus:border-accent-500/50 focus:bg-white/8 outline-none transition-all duration-300" />
                 </div>
                 <div>
-                  <input type="email" required placeholder="Email"
+                  <input type="email" name="email" required placeholder="Email"
                     className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30
                       focus:border-accent-500/50 focus:bg-white/8 outline-none transition-all duration-300" />
                 </div>
                 <div>
-                  <textarea required placeholder="Сообщение" rows="4"
+                  <textarea name="message" required placeholder="Сообщение" rows="4"
                     className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30
                       focus:border-accent-500/50 focus:bg-white/8 outline-none transition-all duration-300 resize-none" />
                 </div>
-                <button type="submit"
+                <button type="submit" disabled={sending}
                   className="w-full bg-accent-500 hover:bg-accent-600 text-white font-semibold py-3.5 rounded-xl
                     transition-all duration-300 shadow-lg shadow-accent-500/25 cursor-pointer flex items-center justify-center gap-2">
                   <Send size={18} />
@@ -929,11 +952,31 @@ function ApplicationModal({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (submitting) return // Защита от двойного клика
+    if (submitting) return
     setSubmitting(true)
-    setSubmitted(true)
+    const form = e.target
+    const data = {
+      access_key: WEB3FORMS_KEY,
+      subject: 'Заявка на вступление в ЦАОПУМ',
+      'Компания': form.company.value,
+      'Тип предприятия': form.type.value,
+      'Контактное лицо': form.contact.value,
+      'Должность': form.position.value || '—',
+      'Телефон': form.phone.value,
+      'Email': form.email.value,
+      'Комментарий': form.comment.value || '—',
+    }
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (res.ok) setSubmitted(true)
+    } catch {}
+    setSubmitting(false)
   }
 
   return (
@@ -969,12 +1012,12 @@ function ApplicationModal({ isOpen, onClose }) {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Компания *</label>
-                    <input type="text" required placeholder="ТОО «Ваша компания»"
+                    <input type="text" name="company" required placeholder="ТОО «Ваша компания»"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Тип предприятия *</label>
-                    <select required defaultValue=""
+                    <select name="type" required defaultValue=""
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm text-slate-700">
                       <option value="" disabled>Выберите...</option>
                       {MEMBER_TYPES.map((m, i) => (
@@ -987,30 +1030,30 @@ function ApplicationModal({ isOpen, onClose }) {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Контактное лицо *</label>
-                    <input type="text" required placeholder="Имя и фамилия"
+                    <input type="text" name="contact" required placeholder="Имя и фамилия"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Должность</label>
-                    <input type="text" placeholder="Директор"
+                    <input type="text" name="position" placeholder="Директор"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm" />
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Телефон *</label>
-                    <input type="tel" required placeholder="+7 (___) ___-__-__"
+                    <input type="tel" name="phone" required placeholder="+7 (___) ___-__-__"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Email *</label>
-                    <input type="email" required placeholder="email@company.kz"
+                    <input type="email" name="email" required placeholder="email@company.kz"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Комментарий</label>
-                  <textarea rows="3" placeholder="Дополнительная информация или вопросы"
+                  <textarea name="comment" rows="3" placeholder="Дополнительная информация или вопросы"
                     className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm resize-none" />
                 </div>
                 <label className="flex items-start gap-3 cursor-pointer py-1">
