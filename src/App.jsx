@@ -600,7 +600,14 @@ function sanitizeImageUrl(url) {
   if (!url || typeof url !== 'string') return ''
   try {
     const parsed = new URL(url)
-    if (parsed.protocol === 'https:') return url
+    if (parsed.protocol !== 'https:') return ''
+    // Google Drive ссылки автоматически преобразуем в прямой формат
+    if (parsed.hostname === 'drive.google.com') {
+      const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+      if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`
+      return ''
+    }
+    return url
   } catch {}
   return ''
 }
