@@ -825,9 +825,9 @@ function Contacts({ onCtaClick }) {
             </h3>
             <div className="space-y-5">
               {[
-                { icon: Mail, label: 'Электронная почта', value: 'info@caopum.kz', href: 'mailto:info@caopum.kz' },
-                { icon: Phone, label: 'Телефон', value: '+7 (___) ___-__-__', href: 'tel:+77000000000' },
-                { icon: MapPin, label: 'Адрес', value: 'г. ___' },
+                { icon: Mail, label: 'Электронная почта', value: 'caopum.kz@gmail.com', href: 'mailto:caopum.kz@gmail.com' },
+                { icon: Phone, label: 'Телефон', value: '+7 777 777 77 77', href: 'tel:+77777777777' },
+                { icon: MapPin, label: 'Адрес', value: 'г. Алматы, ул. Толе би 299 «А»' },
               ].map((c, i) => (
                 <div key={i} className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/8 rounded-xl flex items-center justify-center shrink-0">
