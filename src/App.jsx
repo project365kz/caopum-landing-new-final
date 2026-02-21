@@ -801,8 +801,12 @@ function Contacts({ onCtaClick }) {
         setSent(true)
         form.reset()
         setTimeout(() => setSent(false), 4000)
+      } else {
+        alert('Ошибка отправки. Попробуйте ещё раз.')
       }
-    } catch {}
+    } catch {
+      alert('Нет соединения с сервером. Проверьте интернет.')
+    }
     setSending(false)
   }
 
@@ -883,10 +887,10 @@ function Contacts({ onCtaClick }) {
                       focus:border-accent-500/50 focus:bg-white/8 outline-none transition-all duration-300 resize-none" />
                 </div>
                 <button type="submit" disabled={sending}
-                  className="w-full bg-accent-500 hover:bg-accent-600 text-white font-semibold py-3.5 rounded-xl
+                  className="w-full bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl
                     transition-all duration-300 shadow-lg shadow-accent-500/25 cursor-pointer flex items-center justify-center gap-2">
                   <Send size={18} />
-                  Отправить сообщение
+                  {sending ? 'Отправка...' : 'Отправить сообщение'}
                 </button>
               </form>
             )}
@@ -974,8 +978,14 @@ function ApplicationModal({ isOpen, onClose }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (res.ok) setSubmitted(true)
-    } catch {}
+      if (res.ok) {
+        setSubmitted(true)
+      } else {
+        alert('Ошибка отправки. Попробуйте ещё раз.')
+      }
+    } catch {
+      alert('Нет соединения с сервером. Проверьте интернет.')
+    }
     setSubmitting(false)
   }
 
@@ -1042,7 +1052,7 @@ function ApplicationModal({ isOpen, onClose }) {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Телефон *</label>
-                    <input type="tel" name="phone" required placeholder="+7 (___) ___-__-__" pattern="[\d\s\+\-\(\)]{7,20}" title="Введите корректный номер телефона"
+                    <input type="tel" name="phone" required placeholder="+7 (___) ___-__-__" pattern="^\+?\d[\d\s\-\(\)]{6,18}\d$" title="Введите корректный номер телефона, например +7 777 123 45 67"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm" />
                   </div>
                   <div>
@@ -1060,11 +1070,11 @@ function ApplicationModal({ isOpen, onClose }) {
                   <input type="checkbox" required className="mt-0.5 w-4 h-4 rounded border-slate-300 text-accent-500 focus:ring-accent-500" />
                   <span className="text-xs text-slate-500 leading-relaxed">Даю согласие на обработку персональных данных</span>
                 </label>
-                <button type="submit"
-                  className="w-full bg-accent-500 hover:bg-accent-600 text-white font-semibold py-4 rounded-xl
+                <button type="submit" disabled={submitting}
+                  className="w-full bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl
                     transition-all duration-300 shadow-lg shadow-accent-500/25 cursor-pointer flex items-center justify-center gap-2 mt-2">
                   <Send size={18} />
-                  Отправить заявку
+                  {submitting ? 'Отправка...' : 'Отправить заявку'}
                 </button>
               </form>
             </>
