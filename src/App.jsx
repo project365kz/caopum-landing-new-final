@@ -153,27 +153,14 @@ function useScrollReveal() {
 
 /* Управление блокировкой скролла (считает вложенные блокировки) */
 const scrollLockCount = { current: 0 }
-const scrollLockPos = { current: 0 }
 function lockScroll() {
-  if (scrollLockCount.current === 0) {
-    scrollLockPos.current = window.scrollY
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollLockPos.current}px`
-    document.body.style.left = '0'
-    document.body.style.right = '0'
-    document.body.style.overflow = 'hidden'
-  }
   scrollLockCount.current++
+  document.body.style.overflow = 'hidden'
 }
 function unlockScroll() {
   scrollLockCount.current = Math.max(0, scrollLockCount.current - 1)
   if (scrollLockCount.current === 0) {
-    document.body.style.position = ''
-    document.body.style.top = ''
-    document.body.style.left = ''
-    document.body.style.right = ''
     document.body.style.overflow = ''
-    window.scrollTo(0, scrollLockPos.current)
   }
 }
 
