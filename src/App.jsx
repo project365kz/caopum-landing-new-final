@@ -4,10 +4,16 @@ import {
   Menu, X, ChevronDown, ArrowUp, Send,
   Target, ShieldCheck, Leaf, PackageCheck, Scale, Recycle,
   Landmark, FileText, Users, CalendarDays, ArrowLeftRight, Megaphone,
-  Factory, Container, Film, Package, Boxes, Cog, RotateCcw,
+  Factory, Container, Layers, Package, Boxes, Cog, Wrench,
   Handshake, MessageSquare, UserPlus, BookOpen, Award, Calendar,
   Mail, Phone, MapPin, CheckCircle2, ExternalLink
 } from 'lucide-react'
+
+/* ==================== НАСТРОЙКИ ==================== */
+
+// ID Google Таблицы с новостями (вставь сюда ID из ссылки на таблицу)
+// Пример ссылки: https://docs.google.com/spreadsheets/d/СЮДА_ЭТОТ_ID/edit
+const GOOGLE_SHEET_ID = ''
 
 /* ==================== ДАННЫЕ ==================== */
 
@@ -41,11 +47,11 @@ const ACTIVITIES = [
 const MEMBER_TYPES = [
   { icon: Factory, label: 'Производители полимерной упаковки' },
   { icon: Container, label: 'Производители ПЭТ-тары' },
-  { icon: Film, label: 'Производители плёнок и пакетов' },
+  { icon: Layers, label: 'Производители плёнок и пакетов' },
   { icon: Package, label: 'Производители гофрокартона' },
   { icon: Boxes, label: 'Поставщики сырья' },
-  { icon: Cog, label: 'Поставщики оборудования' },
-  { icon: RotateCcw, label: 'Переработчики вторичного сырья' },
+  { icon: Wrench, label: 'Поставщики оборудования' },
+  { icon: Recycle, label: 'Переработчики вторичного сырья' },
 ]
 
 const BENEFITS = [
@@ -303,14 +309,14 @@ function Hero({ onCtaClick }) {
           <span className="text-white/70 text-xs sm:text-sm font-medium">Профессиональное отраслевое объединение</span>
         </div>
 
-        <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[1.15] mb-4 sm:mb-6 max-w-5xl mx-auto reveal">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[1.15] mb-4 sm:mb-6 max-w-5xl mx-auto reveal">
           Центрально-Азиатское объединение производителей{' '}
           <span className="bg-gradient-to-r from-accent-300 to-accent-500 bg-clip-text text-transparent">
             упаковочных материалов
           </span>
         </h1>
 
-        <p className="text-base sm:text-lg md:text-xl text-white/60 max-w-3xl mx-auto mb-8 sm:mb-10 leading-relaxed reveal reveal-delay-1">
+        <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8 sm:mb-10 leading-relaxed reveal reveal-delay-1">
           Развиваем цивилизованный рынок упаковки, повышаем качество продукции и формируем единые отраслевые стандарты в Центральной Азии
         </p>
 
@@ -483,9 +489,9 @@ function Benefits({ onCtaClick }) {
         />
 
         <div className="max-w-3xl mx-auto text-center mb-8 sm:mb-14 reveal">
-          <p className="text-white/60 text-base sm:text-lg leading-relaxed">
+          <p className="text-white/80 text-base sm:text-lg leading-relaxed">
             Рынок упаковки быстро меняется: усиливаются требования к безопасности, растёт конкуренция,
-            появляются новые стандарты. <strong className="text-white/90">Работать поодиночке становится сложнее.</strong>
+            появляются новые стандарты. <strong className="text-white">Работать поодиночке становится сложнее.</strong>
           </p>
         </div>
 
@@ -497,7 +503,7 @@ function Benefits({ onCtaClick }) {
                 <b.icon size={22} className="text-accent-400 group-hover:text-white transition-colors duration-300" />
               </div>
               <h3 className="font-bold text-white mb-1.5 sm:mb-2 text-sm sm:text-base">{b.title}</h3>
-              <p className="text-white/50 text-xs sm:text-sm leading-relaxed">{b.text}</p>
+              <p className="text-white/70 text-xs sm:text-sm leading-relaxed">{b.text}</p>
             </div>
           ))}
         </div>
@@ -570,10 +576,11 @@ function Members() {
           title="Кто входит в объединение"
           subtitle="Мы объединяем предприятия всей цепочки упаковочной индустрии"
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           {MEMBER_TYPES.map((m, i) => (
             <div key={i} className={`flex items-center gap-3 sm:gap-4 bg-white rounded-xl p-4 sm:p-5
-              border border-slate-100 hover:border-primary-200 hover:shadow-md transition-all duration-300 reveal reveal-delay-${Math.min(i, 5)}`}>
+              border border-slate-100 hover:border-primary-200 hover:shadow-md transition-all duration-300
+              w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] reveal reveal-delay-${Math.min(i, 5)}`}>
               <div className="w-10 h-10 sm:w-11 sm:h-11 bg-primary-500/10 rounded-lg flex items-center justify-center shrink-0">
                 <m.icon size={20} className="text-primary-500" />
               </div>
@@ -586,13 +593,84 @@ function Members() {
   )
 }
 
+/* --- Загрузка данных из Google Таблицы --- */
+
+// Проверяем что URL картинки безопасный (только https)
+function sanitizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return ''
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'https:') return url
+  } catch {}
+  return ''
+}
+
+// Очищаем текстовые поля от HTML-тегов
+function sanitizeText(val) {
+  if (typeof val !== 'string') return String(val ?? '')
+  return val.replace(/<[^>]*>/g, '')
+}
+
+function parseGoogleSheetsResponse(text) {
+  // Ответ приходит в формате: /*O_o*/\ngoogle.visualization.Query.setResponse({...});
+  const match = text.match(/google\.visualization\.Query\.setResponse\((.+)\)/s)
+  if (!match) return []
+  let json
+  try {
+    json = JSON.parse(match[1])
+  } catch {
+    return []
+  }
+  if (!json?.table?.cols || !json?.table?.rows) return []
+  const cols = json.table.cols.map(c => c.label)
+  return json.table.rows
+    .map(row => {
+      const obj = {}
+      row.c.forEach((cell, i) => {
+        if (cols[i]) obj[cols[i]] = cell ? (cell.v ?? '') : ''
+      })
+      // Очищаем данные
+      return {
+        'Заголовок': sanitizeText(obj['Заголовок']),
+        'Текст': sanitizeText(obj['Текст']),
+        'Дата': sanitizeText(obj['Дата']),
+        'Картинка': sanitizeImageUrl(obj['Картинка']),
+      }
+    })
+    .filter(item => item['Заголовок'])
+}
+
+function useGoogleSheetNews() {
+  const [news, setNews] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!GOOGLE_SHEET_ID) {
+      setLoading(false)
+      return
+    }
+    fetch(`https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json`)
+      .then(r => r.text())
+      .then(text => setNews(parseGoogleSheetsResponse(text)))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  return { news, loading }
+}
+
 /* --- Новости --- */
 function News() {
+  const { news, loading } = useGoogleSheetNews()
+
   const placeholders = [
     { title: 'Скоро здесь появятся новости отрасли', text: 'Следите за обновлениями — мы будем публиковать актуальные новости' },
     { title: 'Отраслевая аналитика', text: 'Аналитические обзоры рынка упаковочных материалов Центральной Азии' },
     { title: 'Мероприятия и форумы', text: 'Анонсы предстоящих встреч, конференций и круглых столов' },
   ]
+
+  // Если есть реальные новости — показываем их, иначе заглушки
+  const hasNews = news.length > 0
 
   return (
     <section id="news" className="py-14 sm:py-20 md:py-28 bg-white">
@@ -602,23 +680,57 @@ function News() {
           title="Новости отрасли"
           subtitle="Следите за последними событиями упаковочной индустрии"
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {placeholders.map((n, i) => (
-            <div key={i} className={`rounded-xl sm:rounded-2xl overflow-hidden border border-slate-100 bg-white
-              hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group reveal reveal-delay-${Math.min(i, 2)}`}>
-              <div className="h-32 sm:h-48 bg-gradient-to-br from-primary-50 via-slate-50 to-accent-50 flex items-center justify-center">
-                <Package size={36} className="text-slate-200 group-hover:text-primary-200 transition-colors duration-300 sm:[&]:w-12 sm:[&]:h-12" />
+
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-3 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+          </div>
+        ) : hasNews ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {news.map((n, i) => (
+              <div key={i} className={`rounded-xl sm:rounded-2xl overflow-hidden border border-slate-100 bg-white
+                hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group reveal reveal-delay-${Math.min(i, 2)}`}>
+                {n['Картинка'] ? (
+                  <div className="h-32 sm:h-48 overflow-hidden">
+                    <img src={n['Картинка']} alt={n['Заголовок']}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                ) : (
+                  <div className="h-32 sm:h-48 bg-gradient-to-br from-primary-50 via-slate-50 to-accent-50 flex items-center justify-center">
+                    <Package size={36} className="text-slate-200 group-hover:text-primary-200 transition-colors duration-300 sm:[&]:w-12 sm:[&]:h-12" />
+                  </div>
+                )}
+                <div className="p-4 sm:p-6">
+                  {n['Дата'] && (
+                    <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5 sm:mb-2">{n['Дата']}</p>
+                  )}
+                  <h3 className="font-bold text-slate-900 mb-1.5 sm:mb-2 text-sm sm:text-base group-hover:text-primary-500 transition-colors duration-300">
+                    {n['Заголовок']}
+                  </h3>
+                  <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{n['Текст']}</p>
+                </div>
               </div>
-              <div className="p-4 sm:p-6">
-                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5 sm:mb-2">Скоро</p>
-                <h3 className="font-bold text-slate-900 mb-1.5 sm:mb-2 text-sm sm:text-base group-hover:text-primary-500 transition-colors duration-300">
-                  {n.title}
-                </h3>
-                <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{n.text}</p>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {placeholders.map((n, i) => (
+              <div key={i} className={`rounded-xl sm:rounded-2xl overflow-hidden border border-slate-100 bg-white
+                hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group reveal reveal-delay-${Math.min(i, 2)}`}>
+                <div className="h-32 sm:h-48 bg-gradient-to-br from-primary-50 via-slate-50 to-accent-50 flex items-center justify-center">
+                  <Package size={36} className="text-slate-200 group-hover:text-primary-200 transition-colors duration-300 sm:[&]:w-12 sm:[&]:h-12" />
+                </div>
+                <div className="p-4 sm:p-6">
+                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1.5 sm:mb-2">Скоро</p>
+                  <h3 className="font-bold text-slate-900 mb-1.5 sm:mb-2 text-sm sm:text-base group-hover:text-primary-500 transition-colors duration-300">
+                    {n.title}
+                  </h3>
+                  <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{n.text}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -760,17 +872,23 @@ function ApplicationModal({ isOpen, onClose }) {
   const formRef = useRef(null)
 
   useEffect(() => {
-    if (isOpen) {
-      setSubmitted(false)
-      setSubmitting(false)
-      lockScroll()
-    } else {
+    if (!isOpen) return
+    setSubmitted(false)
+    setSubmitting(false)
+    lockScroll()
+
+    // Закрытие по Escape
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
       unlockScroll()
-      // Сбрасываем форму при закрытии
+      document.removeEventListener('keydown', handleEscape)
       if (formRef.current) formRef.current.reset()
     }
-    return () => { if (isOpen) unlockScroll() }
-  }, [isOpen])
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -782,7 +900,7 @@ function ApplicationModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 pb-[env(safe-area-inset-bottom)]">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm overlay-enter" onClick={onClose} />
       <div className="relative bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] overflow-y-auto modal-scroll modal-enter"
         onClick={e => e.stopPropagation()}>
@@ -893,12 +1011,54 @@ function ScrollToTop({ visible }) {
   )
 }
 
+/* --- Загрузочный экран --- */
+function SplashScreen({ onFinish }) {
+  const [phase, setPhase] = useState('in') // in → show → out → done
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase('show'), 100)
+    const t2 = setTimeout(() => setPhase('out'), 1800)
+    const t3 = setTimeout(() => onFinish(), 2500)
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
+  }, [onFinish])
+
+  return (
+    <div className={`fixed inset-0 z-[200] flex items-center justify-center bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700
+      transition-opacity duration-700 ${phase === 'out' ? 'opacity-0' : 'opacity-100'}`}>
+      {/* Фоновые блобы */}
+      <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-accent-500/8 rounded-full blur-3xl" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary-400/10 rounded-full blur-3xl" />
+
+      <div className={`flex flex-col items-center transition-all duration-1000 ease-out
+        ${phase === 'in' ? 'opacity-0 scale-75' : 'opacity-100 scale-100'}`}>
+        {/* Логотип с кольцом */}
+        <div className="relative">
+          <div className={`absolute inset-[-20px] rounded-full border-2 border-white/10 transition-all duration-1000 ease-out
+            ${phase === 'show' || phase === 'out' ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`} />
+          <div className={`absolute inset-[-40px] rounded-full border border-white/5 transition-all duration-1200 delay-200 ease-out
+            ${phase === 'show' || phase === 'out' ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`} />
+          <img src={logoSvg} alt="ЦАОПУМ" className="h-20 sm:h-28 w-auto splash-logo-glow" />
+        </div>
+
+        {/* Линия-индикатор */}
+        <div className="mt-8 w-16 h-1 rounded-full overflow-hidden bg-white/10">
+          <div className={`h-full bg-gradient-to-r from-primary-400 to-accent-400 rounded-full transition-all ease-out
+            ${phase === 'in' ? 'w-0' : 'w-full'}`}
+            style={{ transitionDuration: '1600ms' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ==================== ГЛАВНЫЙ КОМПОНЕНТ ==================== */
 
 export default function App() {
+  const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const openModal = useCallback(() => setModalOpen(true), [])
   const closeModal = useCallback(() => setModalOpen(false), [])
+  const finishLoading = useCallback(() => setLoading(false), [])
 
   // Единый scroll-менеджер
   const { progress, scrolled, showScrollTop, activeSection } = useScrollManager()
@@ -908,6 +1068,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased">
+      {loading && <SplashScreen onFinish={finishLoading} />}
       <ScrollProgress progress={progress} />
       <Header onCtaClick={openModal} scrolled={scrolled} activeSection={activeSection} />
       <Hero onCtaClick={openModal} />

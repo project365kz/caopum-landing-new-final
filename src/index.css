@@ -105,10 +105,35 @@ body {
   }
 }
 
+/* Отключаем анимации для пользователей с чувствительностью */
+@media (prefers-reduced-motion: reduce) {
+  .hero-blob-1, .hero-blob-2, .hero-blob-3 {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .scroll-hint-anim {
+    animation: none;
+  }
+  .tab-content {
+    animation: none;
+  }
+}
+
 /* Стеклянный эффект карточек */
 .glass-card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (min-width: 641px) {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 
 /* backdrop-filter только на десктопе — iOS Safari глючит */
@@ -187,5 +212,10 @@ body {
 }
 .overlay-enter {
   animation: overlayIn 0.2s ease;
+}
+
+/* Загрузочный экран — свечение логотипа */
+.splash-logo-glow {
+  filter: drop-shadow(0 0 20px rgba(115, 188, 78, 0.3)) drop-shadow(0 0 60px rgba(25, 108, 179, 0.2));
 }
 
