@@ -13,7 +13,7 @@ import {
 
 // ID Google Таблицы с новостями (вставь сюда ID из ссылки на таблицу)
 // Пример ссылки: https://docs.google.com/spreadsheets/d/СЮДА_ЭТОТ_ID/edit
-const GOOGLE_SHEET_ID = ''
+const GOOGLE_SHEET_ID = '1twYu4CozCShAyR2_KGpwlC8M6mV15z73PdvDWD6LxOE'
 
 /* ==================== ДАННЫЕ ==================== */
 
@@ -627,7 +627,7 @@ function parseGoogleSheetsResponse(text) {
     .map(row => {
       const obj = {}
       row.c.forEach((cell, i) => {
-        if (cols[i]) obj[cols[i]] = cell ? (cell.v ?? '') : ''
+        if (cols[i]) obj[cols[i]] = cell ? (cell.f ?? cell.v ?? '') : ''
       })
       // Очищаем данные
       return {
