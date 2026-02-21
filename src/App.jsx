@@ -1042,7 +1042,7 @@ function ApplicationModal({ isOpen, onClose }) {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Телефон *</label>
-                    <input type="tel" name="phone" required placeholder="+7 (___) ___-__-__"
+                    <input type="tel" name="phone" required placeholder="+7 (___) ___-__-__" pattern="[\d\s\+\-\(\)]{7,20}" title="Введите корректный номер телефона"
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 outline-none transition-all text-sm" />
                   </div>
                   <div>
