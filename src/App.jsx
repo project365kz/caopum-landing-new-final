@@ -338,11 +338,6 @@ function Hero({ onCtaClick }) {
         style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'1.5\'/%3E%3C/g%3E%3C/svg%3E")' }} />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 sm:py-32 md:py-36 text-center w-full">
-        <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-4 py-2 sm:px-5 sm:py-2.5 mb-6 sm:mb-8 sm:backdrop-blur-sm reveal">
-          <span className="w-2 h-2 bg-accent-400 rounded-full animate-pulse" />
-          <span className="text-white/70 text-xs sm:text-sm font-medium">{t('hero.badge')}</span>
-        </div>
-
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[1.15] mb-4 sm:mb-6 max-w-5xl mx-auto reveal">
           {t('hero.title.main')}{' '}
           <span className="bg-gradient-to-r from-accent-300 to-accent-500 bg-clip-text text-transparent">
