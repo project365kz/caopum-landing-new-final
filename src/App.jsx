@@ -869,7 +869,7 @@ function Contacts({ onCtaClick }) {
             <div className="space-y-5">
               {[
                 { icon: Mail, label: t('contacts.email.label'), value: 'caopum.kz@gmail.com', href: 'mailto:caopum.kz@gmail.com' },
-                { icon: Phone, label: t('contacts.phone.label'), value: '+7 777 777 77 77', href: 'tel:+77777777777' },
+                { icon: Phone, label: t('contacts.phone.label'), value: '+7 747 794 11 63', href: 'tel:+77477941163' },
                 { icon: MapPin, label: t('contacts.address.label'), value: t('contacts.address.value') },
               ].map((c, i) => (
                 <div key={i} className="flex items-center gap-4">
