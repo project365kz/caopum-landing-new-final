@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import logoSvg from '/logo.svg'
-import logoWhiteSvg from '/logo-white.svg'
 import Preloader from './components/Preloader'
 import { useLang, useT } from './i18n/LanguageContext'
 import {
@@ -248,16 +247,19 @@ function Header({ onCtaClick, scrolled, activeSection }) {
     return () => { if (mobileOpen) unlockScroll() }
   }, [mobileOpen])
 
-  // При скролле — цветной логотип на белом фоне, на Hero — белый на тёмном
-  const currentLogo = scrolled ? logoSvg : logoWhiteSvg
-
+  // На Hero (тёмный фон) — логотип в белом варианте через CSS filter.
+  // При скролле (белый фон) — обычный цветной.
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500
       ${scrolled ? 'bg-white/95 backdrop-blur-lg shadow-lg shadow-slate-900/5' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           <a href="#" className="flex items-center gap-3 shrink-0">
-            <img src={currentLogo} alt="ЦАОПУМ" className="h-10 sm:h-14 w-auto" />
+            <img
+              src={logoSvg}
+              alt="ЦАОПУМ"
+              className={`h-10 sm:h-14 w-auto transition-[filter] duration-500 ${scrolled ? '' : 'brightness-0 invert'}`}
+            />
           </a>
 
           <nav className="hidden lg:flex items-center gap-0.5">
